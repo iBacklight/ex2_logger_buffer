@@ -1,0 +1,12 @@
+#ifndef INCLUDE_MAIN_H_
+#define INCLUDE_MAIN_H_
+
+#include "logger.h"
+
+
+
+/*FreeRTOS Assertion func*/
+// void vAssertCalled( const char * pcFile, unsigned long ulLine );
+
+
+#endif /* INCLUDE_MAIN_H_ */

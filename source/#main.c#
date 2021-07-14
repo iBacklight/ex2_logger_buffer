@@ -1,0 +1,104 @@
+#include <stdio.h>
+#include "main.h"
+#include "logger.h"
+
+//Functions Declaration
+void start_task();
+void test_task();
+
+int main(){
+
+    printf("Logger Task Started\n");
+    start_task();
+    /*Start FreeRTOS scheduling*/
+    vTaskStartScheduler();
+
+    return 0;
+}
+
+/*Assertion*/
+// void vAssertCalled( const char * pcFile, unsigned long ulLine )
+void vAssertCalled(unsigned long ulLine, const char * pcFile)
+{
+    //volatile unsigned long ul = 0;
+
+    //( void ) pcFile;
+    //( void ) ulLine;
+
+     /*To print error info for now*/
+    printf( "ASSERT!  Line %lu of file %s\r\n", ulLine, pcFile );
+	taskENTER_CRITICAL();
+	for( ;; );
+}
+
+void start_task(){
+    taskENTER_CRITICAL();
+
+    if (xTaskCreate((TaskFunction_t)test_task,
+                  "test_task", 300, NULL, 5,
+                  NULL) != 1) {
+    printf("FAILED TO CREATE TEST TASK\n");
+    };
+    
+    taskEXIT_CRITICAL();
+}
+
+void test_task(){
+
+    logger_t self;
+    logger_error_t lerr, err;
+    FILE* fp;
+    char control_file_name[] = "a.txt";
+    char element_file_name = 49;
+    size_t max_capacity = 40;
+    char popped_file_name[13] = "00110001.bin";
+    popped_file_name[12] = "\0";
+    bool_t logger_is_init = MUTEX_FALSE;
+
+    char file_to_insert_name[13] = "00020001.bin";
+    file_to_insert_name[12] = "\0";
+
+    if((lerr = initialize_logger(&self, fp, control_file_name, element_file_name, max_capacity, logger_is_init)) == LOGGER_OK){
+        printf("INITIALIZED OK!\n");
+        printf("INIT HEAD NAME: %s\nINIT TAIL NAME: %s\n\n", self.head_file_name, self.tail_file_name);
+    }
+    else{
+        printf("LOGGER FAILED, ERROR CODE: %d\n", (int)lerr);
+    }
+
+   if(logger_insert(&self, &err, file_to_insert_name) == NULL)
+        printf("NULL FILE\n");
+    else
+    {
+        printf("INSERTED OK!\n");
+        printf("CURRENT HEAD NAME: %s\nCURRENT TAIL NAME: %s\n\n", self.head_file_name, self.tail_file_name);
+    }
+
+    if(logger_pop(&self, popped_file_name) != LOGGER_OK){
+        printf("POP FAILED\n");
+    }
+    else
+    {
+        printf("POPPED FILE NAME: %s\n", popped_file_name);
+        printf("CURRENT HEAD NAME: %s\nCURRENT TAIL NAME: %s\n\n", self.head_file_name, self.tail_file_name);
+    }
+
+    logger_peek_tail(&self, &err);
+    if(err != LOGGER_OK)
+        printf("PEEK TAIL FAILED\n");
+    else
+    {
+        printf("PEEK TAIL OK!\n");
+        printf("CURRENT HEAD NAME: %s\nCURRENT TAIL NAME: %s\n\n", self.head_file_name, self.tail_file_name);
+    }
+
+    logger_peek_head(&self, &err);
+    if(err != LOGGER_OK)
+        printf("PEEK HEAD FAILED\n");
+    else
+    {
+        printf("PEEK HEAD OK!\n");
+        printf("CURRENT HEAD NAME: %s\nCURRENT TAIL NAME: %s\n\n", self.head_file_name, self.tail_file_name);
+    }
+
+}
